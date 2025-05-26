@@ -1,138 +1,111 @@
-# FIRST Installation
-## 🚀 Quick Install
+MTProto Proxy Whitelist Installer
+=================================
 
-```bash
-curl -O https://raw.githubusercontent.com/jeet8200/iwasbored/refs/heads/main/start.sh && \
-sudo apt update &&\
-apt-get install unzip -y &&\
-sudo apt install dos2unix &&\
-apt-get update -y && apt-get upgrade -y && apt autoclean -y && apt autoremove && \  #full update
-dos2unix start.sh &&\
-chmod +x start.sh && \
-bash start.sh
-```
-- 0: Make sure Telegram proxy Listen on 127.0.0.1 insted of just 0.0.0.0 not really just first install mtproto. 
-- 1: Change the the user sharedlink mtprotoproxy proxy port  to 8443 or ur nginx stream port  . 
-# MTProto Proxy Whitelist Installer
+A robust Bash script for automated installation, configuration, and management of a secure MTProto Telegram proxy environment, complete with an NGINX reverse proxy, PHP whitelist portal, Telegram integration, enhanced security, and automation features.
 
-This script automates the installation and management of an MTProto Telegram Proxy whitelist system protected by NGINX and PHP. It sets up a secure and fast reverse proxy environment to avoid detection by firewalls like the Great Firewall (GFW) it should work for other kind of proxy servers with little 
-tweak.
+Features
+--------
+- MTProto Proxy management (Python or Erlang based)
+- NGINX reverse proxy setup with stream module and whitelist enforcement
+- Secure web whitelist portal (PHP, password & token-protected)
+- Automatic SSL with Certbot (or self-signed fallback)
+- Fail2ban and UFW firewall integrated for enhanced security
+- Telegram bot integration for whitelisting via chat
+- Automated backups and permission repair
+- Random fake HTML site for plausible deniability
+- Automated cleanup of expired whitelist entries (cron-ready)
+- Menu-driven management and Telegram user database
 
----
+Quick Install
+-------------
+    curl -O https://raw.githubusercontent.com/jeet8200/iwasbored/main/start.sh
+    sudo apt update
+    sudo apt install unzip dos2unix -y
+    dos2unix start.sh
+    chmod +x start.sh
+    sudo bash start.sh
 
-## Features
+    Note: Run as root or with sudo!
 
-- Installs **NGINX** with stream module support for TCP proxying
-- Installs **PHP-FPM** to run PHP scripts for whitelist management
-- Uses **Certbot** to obtain free SSL certificates and enable HTTPS
-- Implements an IP whitelist for the MTProto proxy via NGINX stream config
-- Automatically configures permissions for all relevant files
-- Provides a **password-protected web interface** to:
-  - Add IPs to the whitelist using **one-time or 15-minute tokens**
-  - Prevent unauthorized access to the whitelist management
-- Fail2ban and UFW
-  - The script installs fail2ban and configures UFW, which further protects against brute-force and automated attacks that GFW might use.
-- Includes an uninstall option to cleanly remove everything
-- 
----
+Main Menu Options
+-----------------
+1. Install MTProto Proxy only (choose Python or Erlang version)
+2. Install Whitelist System (NGINX, PHP, firewall, Fail2ban)
+3. Generate access URL with tokens (for secure IP whitelisting)
+4. Fix permissions (repair file/directory permissions)
+5. Change whitelist password
+6. Check system status
+7. Uninstall everything (full wipe)
+8. Send whitelist link via Telegram
+9. Random Fake HTML site (for plausible deniability)
+M. Manage Telegram Users (add/edit/delete user records)
+A. Clean Old Whitelisted IPs (remove expired entries)
+0. Exit
 
-## How It Works
+How It Works
+------------
+NGINX Stream Proxy
+- NGINX listens on a secure port, proxies to your MTProto backend
+- Only whitelisted IPs (in /etc/nginx/whitelist.txt) can connect
 
-### 1. NGINX Stream Proxy
+Web Whitelist Portal
+- Access via HTTPS on your configured domain/port
+- Add your IP with password + time-limited or one-time token
+- Tokens generated securely; one-time tokens are tracked and cannot be reused
 
-- MTProto proxy listens on a configured port (e.g., `4433`)
-- NGINX listens on another port (e.g., `443`) and acts as a TCP reverse proxy to the MTProto proxy
-- Only IPs in the whitelist are allowed through NGINX to the MTProto proxy (using `allow IP;` directives)
+Telegram Integration
+- Save user/chat info and proxy links
+- Send whitelist links directly via Telegram bot
 
-### 2. Whitelist File
+Security
+- All credentials stored securely (root or www-data only)
+- Fail2ban jail for brute-force attempts on the web portal
+- Automated backups before critical changes
 
-- `/etc/nginx/whitelist.txt` contains all allowed IP addresses in NGINX format:
+Automation
+- Cron-ready scripts for daily whitelist and template cleanups
+- Random HTML site deploys for hiding the real portal
 
-  ```
-  allow 1.2.3.4;
-  allow 5.6.7.8;
-  ```
+Configuration Files & Paths
+---------------------------
+- Script config: /etc/mtproxy-whitelist.conf
+- Whitelist: /etc/nginx/whitelist.txt
+- Password: /etc/nginx/.password
+- Used Tokens: /etc/nginx/used_tokens.txt
+- Telegram users: /etc/nginx/telegram_users.txt
+- Telegram bot token: /etc/nginx/mtproxy-whitelist.conf.telegram_token
+- PHP portal: /var/www/html/post.php
+- NGINX stream conf: /etc/nginx/stream.d/mtproto.conf
+- NGINX site conf: /etc/nginx/sites-available/whitelist_gateway
 
-- NGINX stream config includes this file to permit only whitelisted IPs
+Uninstall
+---------
+Choose menu option 7 for a complete uninstall, including:
+- All installed packages (nginx, php, fail2ban, etc.)
+- Configuration and website files
+- Firewall rules
 
-### 3. Whitelist Management Web Interface (`post.php`)
+Automate Maintenance
+-------------------
+Whitelist cleanup:
+    Add to root crontab for daily cleanup:
+    0 3 * * * /bin/bash /path/to/start.sh --clean-whitelist >> /var/log/mtproxy-whitelist.log 2>&1
 
-- Hosted on HTTPS on a configured port (default port 8443)
-- Requires a **password** provided as a GET parameter `pass` (e.g., `?pass=YourPassword`)
-- To add an IP, you send a GET request with one of these parameters:
-  - `one_time_token` — a unique token usable only once
-  - `five_min_token` — a token valid for 5 minutes, reusable multiple times
-- When a valid token is submitted, the server extracts the client's IP from the request and adds it to the whitelist file if not already present
-- Tokens are generated by the script and have cryptographic verification for security
+Random HTML refresh:
+    Add to root crontab for new fake site every 6 hours:
+    0 */6 * * * /bin/bash /path/to/start.sh --random-template >> /var/log/mtproxy-whitelist.log 2>&1
 
-### 4. Tokens
+Troubleshooting
+---------------
+- Check system status from the menu (option 6)
+- NGINX and PHP-FPM must be running
+- UFW firewall should allow necessary ports
+- All config and data files must be readable/writable by www-data/root
+- Check logs: /var/log/mtproxy-whitelist.log and /var/log/nginx/error.log
 
-- Tokens are base64-encoded strings representing `timestamp:sha256(secret+timestamp)`
-- The secret is your whitelist password (stored securely)
-- **One-time tokens** can only be used once (stored in `/etc/nginx/used_tokens.txt`)
-- **Five-minute tokens** are valid for 5 minutes from generation and can be reused multiple times
+Credits
+-------
+- MTProto Proxy: alexbers/python-telegram-mtproto-proxy and seriyps/mtproto-proxy
+- Random Fake HTML: GFW4Fun/randomfakehtml
 
-### 5. Final Flow
-
-- User requests access to the whitelist URL with the password and a valid token
-- If token is valid and IP not in whitelist, IP is added and allowed by NGINX stream
-- User can connect through NGINX proxy to the MTProto server without further authentication
-
----
-
-## Usage
-
-# Main Menu Options
-
-   - 1 Install MTProto Proxy only (choose Python or Erlang version).
-   - 2 Install everything (recommended for most users).
-   - 3 Generate access URL with tokens (for safe IP whitelisting).
-   - 4 Fix permissions (repair file/directory permissions).
-   - 5 Change whitelist password.
-   - 6 Check system status.
-   - 7 Uninstall everything (full wipe).
-   - 8 Send whitelist link via Telegram.
-   - 9 Install random fake HTML site (for plausible deniability).
-   - 0 Exit.
-
-### Advanced Features
-
-    Telegram Notification: Send whitelist links directly to users via Telegram Bot API.
-    Random Fake HTML: Deploy random static sites to obscure the real gateway.
-    Automated Backups: Config and data files are preserved before changes.
-
-## Configuration
-
-- Password is stored in `/etc/nginx/.password`
-- Whitelist file is `/etc/nginx/whitelist.txt`
-- Used tokens are tracked in `/etc/nginx/used_tokens.txt`
-- PHP script is `/var/www/html/post.php`
-- NGINX stream config is `/etc/nginx/stream.d/mtproto.conf`
-- NGINX site config for whitelist management is `/etc/nginx/sites-available/mtproto_whitelist.conf`
-
----
-
-## Security Notes
-
-- Choose a strong whitelist password
-- Protect the whitelist URL with HTTPS
-- Use one-time tokens for maximum security
-- Regularly review whitelist IPs and tokens
-- its a working in progress so feel free to make it better
----
-
-## Troubleshooting
-
-- Make sure NGINX and PHP-FPM services are running
-- Check permissions of whitelist files
-- Review NGINX error logs (`/var/log/nginx/error.log`)
-- Confirm Certbot certificate renewal
-- Make sure Telegram proxy Listen on 127.0.0.1 insted of just 0.0.0.0 
-- Helpfull to use fix Permissions on the menu
-- make sure ufw is active and enable with the nginx stream port allowed and http or https
-- u can see the allowed ip in the nginx folder most settings are in nginx folder
----
-## Credits
-
-    MTProto Proxy: alexbers/python-telegram-mtproto-proxy and seriyps/mtproto-proxy
-    Random Fake HTML by GFW4Fun
+Feel free to contribute or open issues! This project is a work in progress.
