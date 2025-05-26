@@ -107,7 +107,7 @@ Troubleshooting
 
 Credits
 -------
-- MTProto Proxy: alexbers/python-telegram-mtproto-proxy and seriyps/mtproto-proxy
+- MTProto Proxy: alexbers/python-telegram-mtproto-proxy and Erlang seriyps/mtproto-proxy
 - Random Fake HTML: GFW4Fun/randomfakehtml
 
 Feel free to contribute or open issues! This project is a work in progress.
