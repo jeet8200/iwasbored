@@ -98,10 +98,12 @@ Random HTML refresh:
 Troubleshooting
 ---------------
 - Check system status from the menu (option 6)
+- Its always RECOMMANDED to reboot After first Cycle of Install
 - NGINX and PHP-FPM must be running
 - UFW firewall should allow necessary ports
 - All config and data files must be readable/writable by www-data/root
 - Check logs: /var/log/mtproxy-whitelist.log and /var/log/nginx/error.log
+- Change mtprotoProxy Listen Ip to 127.0.0.1 
 
 Credits
 -------
