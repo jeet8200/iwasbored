@@ -37,9 +37,9 @@ Main Menu Options
 6. Check system status
 7. Uninstall everything (full wipe)
 8. Send whitelist link via Telegram
-9. Random Fake HTML site (for plausible deniability)
-M. Manage Telegram Users (add/edit/delete user records)
-A. Clean Old Whitelisted IPs (remove expired entries)
+9. Random Fake HTML site (for plausible deniability)<br>
+M. Manage Telegram Users (add/edit/delete user records)<br>
+A. Clean Old Whitelisted IPs (remove expired entries)<br>
 0. Exit
 
 How It Works
