@@ -108,6 +108,7 @@ Troubleshooting
 Credits
 -------
 - MTProto Proxy: alexbers/python-telegram-mtproto-proxy and Erlang seriyps/mtproto-proxy
+- Pick the One THat woRks for ur vps it migh be diffrent  
 - Random Fake HTML: GFW4Fun/randomfakehtml
 
 Feel free to contribute or open issues! This project is a work in progress.
