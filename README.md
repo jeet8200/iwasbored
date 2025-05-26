@@ -22,6 +22,7 @@ Quick Install
     sudo apt update
     sudo apt install unzip dos2unix -y
     dos2unix start.sh
+    apt-get update -y && apt-get upgrade -y && apt autoclean -y && apt autoremove
     chmod +x start.sh
     sudo bash start.sh
 
