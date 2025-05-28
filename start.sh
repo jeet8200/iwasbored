@@ -132,6 +132,113 @@ check_dependencies() {
     fi
   done
 }
+#wildcard cloudflare cert
+cloudflare_cert_menu() {
+    local BASE_DIR="$HOME/.cloudflare_certs"
+    local LIST_FILE="$BASE_DIR/cert_list.txt"
+    mkdir -p "$BASE_DIR"
+    touch "$LIST_FILE"
+
+    while true; do
+        echo ""
+        echo "=== Cloudflare Wildcard SSL Certificate Manager ==="
+        echo "1) Add new wildcard certificate"
+        echo "2) List managed domains"
+        echo "3) Delete a domain's certificate + credentials"
+        echo "4) Renew a domain's certificate"
+        echo "5) Back to main menu"
+        read -rp "Choose an option: " option
+
+        case "$option" in
+            1)
+                read -rp "Enter your wildcard domain (e.g. *.example.com): " wildcard_domain
+                domain=$(echo "$wildcard_domain" | sed 's/\*\.//')
+                cred_file="$BASE_DIR/cloudflare_${domain}.ini"
+
+                if grep -q "^$domain:" "$LIST_FILE"; then
+                    echo "⚠️ Domain $domain already exists."
+                    return
+                fi
+
+                echo "Choose authentication method:"
+                echo "1) Global API Key (requires email)"
+                echo "2) API Token (recommended)"
+                read -rp "Enter 1 or 2: " auth_choice
+
+                if [[ "$auth_choice" == "1" ]]; then
+                    read -rp "Enter your Cloudflare email: " cf_email
+                    read -rsp "Enter your Global API Key: " cf_key
+                    echo ""
+                    cat > "$cred_file" <<EOF
+dns_cloudflare_email = $cf_email
+dns_cloudflare_api_key = $cf_key
+EOF
+                    auth_type="api_key"
+                elif [[ "$auth_choice" == "2" ]]; then
+                    read -rsp "Enter your Cloudflare API Token: " cf_token
+                    echo ""
+                    cat > "$cred_file" <<EOF
+dns_cloudflare_api_token = $cf_token
+EOF
+                    auth_type="api_token"
+                else
+                    echo "Invalid choice."
+                    continue
+                fi
+
+                chmod 600 "$cred_file"
+                echo "Requesting certificate for $wildcard_domain and $domain..."
+                if sudo certbot certonly \
+                    --dns-cloudflare \
+                    --dns-cloudflare-credentials "$cred_file" \
+                    -d "$wildcard_domain" -d "$domain"; then
+                    echo "$domain:$auth_type:$cred_file" >> "$LIST_FILE"
+                    echo "✅ Certificate issued successfully."
+                else
+                    echo "❌ Certificate issuance failed."
+                fi
+                ;;
+            2)
+                echo "=== Managed Domains ==="
+                if [[ ! -s "$LIST_FILE" ]]; then
+                    echo "No domains found."
+                else
+                    nl -w2 -s'. ' "$LIST_FILE" | cut -d':' -f1
+                fi
+                ;;
+            3)
+                nl -w2 -s'. ' "$LIST_FILE" | cut -d':' -f1
+                read -rp "Enter the domain to delete (e.g. example.com): " domain
+                line=$(grep "^$domain:" "$LIST_FILE")
+                if [[ -z "$line" ]]; then
+                    echo "Domain not found."
+                else
+                    cred_file=$(echo "$line" | cut -d':' -f3)
+                    sudo certbot delete --cert-name "$domain"
+                    rm -f "$cred_file"
+                    sed -i "/^$domain:/d" "$LIST_FILE"
+                    echo "✅ Deleted $domain and its associated files."
+                fi
+                ;;
+            4)
+                nl -w2 -s'. ' "$LIST_FILE" | cut -d':' -f1
+                read -rp "Enter the domain to renew (e.g. example.com): " domain
+                line=$(grep "^$domain:" "$LIST_FILE")
+                if [[ -z "$line" ]]; then
+                    echo "Domain not found."
+                else
+                    cred_file=$(echo "$line" | cut -d':' -f3)
+                    sudo certbot certonly \
+                        --dns-cloudflare \
+                        --dns-cloudflare-credentials "$cred_file" \
+                        -d "*.$domain" -d "$domain" || echo "❌ Renewal failed for $domain."
+                fi
+                ;;
+            5) break ;;
+            *) echo "Invalid option." ;;
+        esac
+    done
+}
 
 # Load configuration
 load_config() {
@@ -1376,6 +1483,7 @@ show_menu() {
     echo -e "9) Random FakeHtml"
     echo -e "M) Manage Telegram Users" # New option
     echo -e "A) Clean Old Whitelisted IPs"
+    echo -e "C) Manage Cloudflare wildcard SSL certs"
     echo -e "0) Exit${NC}"
     echo -e "==========================================="
 
@@ -1431,6 +1539,10 @@ show_menu() {
       A|a)
         check_root
         clean_old_whitelist_entries
+        ;;
+      C|c)
+        check_root
+        cloudflare_cert_menu 
         ;;
       0)
         echo -e "${BLUE}Exiting...${NC}"
