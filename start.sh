@@ -1463,6 +1463,12 @@ random_template_site() {
         error_exit "Extraction error: Template directory not found or web directory missing."
     fi
 }
+if [[ "$#" -eq 1 && "$1" == "--random-template" ]]; then
+    log "Script called for automated random template update."
+    random_template_site
+    exit 0
+fi
+
 
 # ==============================================
 # MAIN MENU
